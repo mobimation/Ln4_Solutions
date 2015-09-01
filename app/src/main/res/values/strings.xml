@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Ln4 Solutions</string>
+    <string name="title_activity_login">Ln4 Solutions - Login</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_web">Ln4 Solutions - Mobile</string>
+</resources>
