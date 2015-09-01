@@ -73,13 +73,15 @@
             android:textSize="40sp"
             android:background="#8888AA"
             android:textColor="#DDDDDD"
-            android:padding="20sp" />
+            android:paddingLeft="20sp"
+            android:paddingRight="20sp"
+            android:paddingTop="10sp"
+            android:paddingBottom="10sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Idle..."
             android:id="@+id/status"
             android:layout_gravity="center_horizontal"
             android:paddingTop="10dp"
