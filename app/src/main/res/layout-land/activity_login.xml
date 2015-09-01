@@ -43,16 +43,44 @@
             android:textSize="26sp"
             android:textColor="#DDDDDD" />
 
-        <EditText
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/customerId"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
-            android:gravity="center_horizontal"
-            android:textSize="50sp"
-            android:textColor="#DDDDDD"
-            android:singleLine="true" />
+            android:layout_height="match_parent"
+            android:layout_weight="25">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="22"></LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="56">
+
+                <EditText
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/customerId"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:gravity="center_horizontal"
+                    android:textSize="50sp"
+                    android:textColor="#DDDDDD"
+                    android:singleLine="true"
+                    android:text="000000000" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="22"></LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
 
     <LinearLayout
@@ -75,8 +103,8 @@
             android:textColor="#DDDDDD"
             android:paddingLeft="20sp"
             android:paddingRight="20sp"
-            android:paddingTop="10sp"
-            android:paddingBottom="10sp" />
+            android:paddingBottom="10sp"
+            android:paddingTop="10sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -85,7 +113,8 @@
             android:id="@+id/status"
             android:layout_gravity="center_horizontal"
             android:paddingTop="10dp"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:textColor="#DDDDDD" />
     </LinearLayout>
 
 </LinearLayout>
