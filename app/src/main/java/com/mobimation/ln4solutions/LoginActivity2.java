@@ -9,20 +9,13 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,25 +25,35 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class LoginActivity extends Activity {
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+/**
+ * Experimental version of LoginActivity that makes use of the
+ * custom formatting CustomerId widget.
+ */
+public class LoginActivity2 extends Activity {
     protected Button buttonSubmit;
     protected TextView status;
-    private final String LTAG = LoginActivity.class.getSimpleName();
+    private final String LTAG = LoginActivity2.class.getSimpleName();
     private static String url="https://h01.ln4solutions.com/code2url/code2url.php";
     private String webUrl;
-    private String before;
-
+    private String befo;
     private int count=0;
+    private int aft;
+    private int bef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_login2);
         // Setup UI components
         buttonSubmit = (Button)findViewById(R.id.buttonSubmit);
         status = (TextView)findViewById(R.id.status);
         status.setText(" ");
-        final EditText customerId = (EditText)findViewById(R.id.customerId);
+        final CustomerId customerId = (CustomerId)findViewById(R.id.customerId2);
 
         // Get granted URL if any and if so launch browser directly
         final SharedPreferences pref = this.getSharedPreferences(
@@ -64,33 +67,30 @@ public class LoginActivity extends Activity {
             customerId.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                   before=s.toString();  // Log.d(LTAG,"Before="+"["+s+"]"+" start="+start+" count="+count+" after="+after);
+                    aft=after;
+                       befo=s.toString();
+                    Log.d(LTAG,"Before="+"["+s+"]"+" start="+start+" count="+count+" after="+after);
                 }
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                   // Log.d(LTAG,"On="+"["+s+"]"+" start="+start+" before="+before+" count="+count);                }
+                   Log.d(LTAG,"On="+"["+s+"]"+" start="+start+" before="+before+" count="+count);
+                    bef=before;
                 }
+
                 @Override
                 public void afterTextChanged(Editable s) {
                     Log.d(LTAG,"After="+"["+s.toString()+"]");
-                    if ((s.length()==3) | (s.length()==7)) {
-                        if (s.length()>before.length())  // If moving forward
+                    if ((s.length()==3) || (s.length()==7)) {
+                        if (befo.length()<=s.length())
                             customerId.setText(customerId.getText() + " ");
-                            customerId.setSelection(customerId.length());
+                        customerId.setSelection(customerId.length());
                     }
+                    if (s.length()>11)
+                        s.delete(s.length() - 1, s.length());
+
                     if (s.length()==11) {// Take VK down
-                            InputMethodManager inputMethodManager =
-                                    (InputMethodManager) getApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
-                            //Find the currently focused view, so we can grab the correct window token from it.
-                            View view = getCurrentFocus();
-                            //If no view currently has focus, create a new one, just so we can grab a window token from it
-                            if (view != null) {
-                                inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-                            }
-                            // Clean up string
-
-
+                            VKdown();
                     }
                 }
             });
@@ -127,6 +127,16 @@ public class LoginActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void VKdown() {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) getApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view != null) {
+            inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
     /**
      * Run asynchronous request for customer page URL.
      * Returns url if submitted id is valid, else null.

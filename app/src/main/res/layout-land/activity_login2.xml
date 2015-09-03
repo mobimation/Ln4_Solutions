@@ -29,9 +29,9 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="vertical"
-        android:layout_weight="15"
+        android:layout_weight="30"
         android:gravity="center_vertical">
 
         <TextView
@@ -41,9 +41,9 @@
             android:text="Please input Customer Id"
             android:id="@+id/loginPrompt"
             android:layout_gravity="center_horizontal"
-            android:textSize="26sp"
+            android:textSize="22sp"
             android:textColor="#DDDDDD"
-            android:layout_marginBottom="10sp" />
+            android:layout_marginTop="20dp" />
 
         <LinearLayout
             android:orientation="horizontal"
@@ -54,7 +54,7 @@
                 android:orientation="horizontal"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="10">
+                android:layout_weight="25">
 
             </LinearLayout>
 
@@ -64,21 +64,21 @@
                 android:layout_height="match_parent"
                 android:layout_weight="80">
 
-                <EditText
+                <com.mobimation.ln4solutions.CustomerId
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/customerId"
+                    android:id="@+id/customerId2"
                     android:gravity="center_horizontal"
-                    android:textSize="40sp"
+                    android:textSize="45sp"
                     android:textColor="#DDDDDD"
-                    android:singleLine="false" />
+                    android:singleLine="true" />
             </LinearLayout>
 
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="10"></LinearLayout>
+                android:layout_weight="25"></LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
@@ -90,7 +90,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:layout_weight="20"
+        android:layout_weight="25"
         android:gravity="center_vertical|center_horizontal">
 
         <Button
@@ -98,10 +98,11 @@
             android:layout_height="wrap_content"
             android:text="Submit"
             android:id="@+id/buttonSubmit"
-            android:textSize="40sp"
+            android:textSize="22sp"
             android:background="#8888AA"
             android:textColor="#DDDDDD"
-            android:padding="20sp" />
+            android:paddingLeft="20sp"
+            android:paddingRight="20sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -109,10 +110,8 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:id="@+id/status"
             android:layout_gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:textSize="25sp"
-            android:textColor="#DDDDDD"
-            android:text=" " />
+            android:textSize="20sp"
+            android:textColor="#DDDDDD" />
     </LinearLayout>
 
 </LinearLayout>
