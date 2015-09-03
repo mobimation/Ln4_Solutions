@@ -81,7 +81,7 @@ public class WebActivity extends Activity {
                     editor.clear();
                     editor.commit();
                     Log.d(TAG, "TEST:Cleared granted URL");
-                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                    Intent intent = new Intent(getApplicationContext(), LoginActivity2.class);
                     startActivity(intent);
                 }
                 return true;
