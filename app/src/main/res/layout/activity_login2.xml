@@ -71,7 +71,12 @@
                     android:gravity="center_horizontal"
                     android:textSize="45sp"
                     android:textColor="#DDDDDD"
+<<<<<<< HEAD
                     android:singleLine="true" />
+=======
+                    android:singleLine="true"
+                    android:text="000 000 000" />
+>>>>>>> origin/master
             </LinearLayout>
 
             <LinearLayout
@@ -111,7 +116,12 @@
             android:id="@+id/status"
             android:layout_gravity="center_horizontal"
             android:textSize="20sp"
+<<<<<<< HEAD
             android:textColor="#DDDDDD" />
+=======
+            android:textColor="#DDDDDD"
+            android:text="ibibibiibi" />
+>>>>>>> origin/master
     </LinearLayout>
 
 </LinearLayout>
