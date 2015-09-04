@@ -4,11 +4,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,7 +39,7 @@ import java.io.InputStreamReader;
  * Experimental version of LoginActivity that makes use of the
  * custom formatting CustomerId widget.
  */
-public class LoginActivity2 extends Activity {
+public class LoginActivity2 extends Activity implements View.OnKeyListener {
     protected Button buttonSubmit;
     protected TextView status;
     private final String LTAG = LoginActivity2.class.getSimpleName();
@@ -58,9 +63,11 @@ public class LoginActivity2 extends Activity {
         // Get granted URL if any and if so launch browser directly
         final SharedPreferences pref = this.getSharedPreferences(
                 "com.mobimation.URL", Context.MODE_PRIVATE);
+        // Use browser preference setting if any (internal=default)
+        boolean external=pref.getBoolean("external", false);
         String u=pref.getString("url",null);
         if (u!=null) {
-            launchWeb(getApplicationContext(), u);
+            launchWeb(external,getApplicationContext(), u);
             finish(); // Abort Login activity launch
         }
         else {
@@ -109,7 +116,18 @@ public class LoginActivity2 extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+
         getMenuInflater().inflate(R.menu.menu_login, menu);
+
+        int positionOfMenuItem = 0; // or whatever...
+        MenuItem item = menu.getItem(positionOfMenuItem);
+       SpannableString s = new SpannableString("Settings");
+        s.setSpan(new ForegroundColorSpan(Color.parseColor("#DDDDDD")), 0, s.length(), 0);
+        item.setTitle(s);
+
+
+
+
         return true;
     }
 
@@ -120,7 +138,10 @@ public class LoginActivity2 extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
+         if (id == R.id.action_settings) {
+             Intent myIntent = new Intent(this,SettingsActivity.class);
+             startActivity(myIntent);
+
             return true;
         }
 
@@ -137,6 +158,17 @@ public class LoginActivity2 extends Activity {
             inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
+
+    @Override
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            if (event.getAction()==KeyEvent.ACTION_UP)
+              return true;
+            return false;
+        } else
+        return false;
+    }
+
     /**
      * Run asynchronous request for customer page URL.
      * Returns url if submitted id is valid, else null.
@@ -227,17 +259,19 @@ public class LoginActivity2 extends Activity {
 
         @Override
         protected void onPostExecute(String webUrl) {
-            if (webUrl!=null) {
+            if (webUrl!=null) {  // If web access granted
                 // Store granted URL
                 SharedPreferences pref = context.getSharedPreferences(
                         "com.mobimation.URL", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("url", webUrl);
                 editor.commit();
+                // Use browser preference setting if any (internal=default)
+                boolean external=pref.getBoolean("external",false);
                 // Launch WebActivity
                 Log.d(TAG,"Launching web activity");
                 status.setText("Loading browser..");
-                launchWeb(context,webUrl);
+                launchWeb(external,context,webUrl);
                 /* Intent intent = new Intent(context, WebActivity.class);
                 intent.putExtra("webUrl", webUrl);
                 startActivity(intent); */
@@ -252,18 +286,29 @@ public class LoginActivity2 extends Activity {
      * @param c  Application context
      * @param url  URLfor start page
      */
-    private void launchWeb(Context c,String url) {
-        if (url !=null) {
-            Intent intent = new Intent(c, WebActivity.class);
-            // Clear activity stack so that back button on browser
-            // view will cause app exit instead of return to login.
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            intent.putExtra("webUrl", url); // Pass URL to browser activity
-            startActivity(intent);
-            finish();
+    private void launchWeb(boolean external,Context c,String url) {
+        if (external==false) {
+            /**
+             * Launch internal web browser as a WebView
+             */
+            if (url != null) {
+                Intent intent = new Intent(c, WebActivity.class);
+                // Clear activity stack so that back button on browser
+                // view will cause app exit instead of return to login.
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.putExtra("webUrl", url); // Pass URL to browser activity
+                startActivity(intent);
+                finish();
+            } else
+                Log.e(LTAG, "Error-launchWeb() called with null URL !");
         }
-        else
-            Log.e(LTAG,"Error-launchWeb() called with null URL !");
+        else {
+            /**
+             * Launch external web browser
+             */
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(browserIntent);
+        }
     }
 }

@@ -12,14 +12,14 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:layout_weight="25"
-        android:gravity="center_vertical|center_horizontal">
+        android:layout_weight="20"
+        android:gravity="center_horizontal|bottom">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/logo"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="center_horizontal|bottom"
             android:src="@drawable/ln4" />
 
     </LinearLayout>
@@ -31,7 +31,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:layout_weight="30"
+        android:layout_weight="20"
         android:gravity="center_vertical">
 
         <TextView
@@ -41,9 +41,9 @@
             android:text="Please input Customer Id"
             android:id="@+id/loginPrompt"
             android:layout_gravity="center_horizontal"
-            android:textSize="22sp"
+            android:textSize="18sp"
             android:textColor="#DDDDDD"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="10dp" />
 
         <LinearLayout
             android:orientation="horizontal"
@@ -69,9 +69,10 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/customerId2"
                     android:gravity="center_horizontal"
-                    android:textSize="45sp"
+                    android:textSize="50sp"
                     android:textColor="#DDDDDD"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:text="000 000 000" />
             </LinearLayout>
 
             <LinearLayout

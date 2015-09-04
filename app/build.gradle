@@ -11,12 +11,12 @@ android {
         applicationId "com.mobimation.ln4solutions"
         minSdkVersion 10
         targetSdkVersion 22
-        versionCode 5
-        versionName "0.4"
+        versionCode 6
+        versionName "0.5"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
