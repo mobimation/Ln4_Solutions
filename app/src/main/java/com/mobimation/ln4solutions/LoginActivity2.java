@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -21,6 +23,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
@@ -35,21 +38,29 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
 
 /**
  * Experimental version of LoginActivity that makes use of the
  * custom formatting CustomerId widget.
  */
 public class LoginActivity2 extends Activity {
+    final static boolean auto=true; // true = Automatic browser selection
+
     protected Button buttonSubmit;
+    protected ImageView buttonUpgrade;
     protected TextView status;
     private final String LTAG = LoginActivity2.class.getSimpleName();
+    // url to ln4 customer authentication service
     private static String url="https://h01.ln4solutions.com/code2url/code2url.php";
     private String webUrl;
     private String befo;
     private int count=0;
     private int aft;
     private int bef;
+    private boolean forward;
+    private boolean add;
+    private boolean adjust;
 /*
     @Override
     public void onStart() {
@@ -70,27 +81,59 @@ public class LoginActivity2 extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login2);
-        // Setup UI components
+        // Temporary: When user clicks LN4 logo a new app version
+        // is installed if any upon user approval.
+        buttonUpgrade = (ImageView) findViewById(R.id.logo);
+        buttonUpgrade.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Launch application update activity
+                Intent intent = new Intent(getApplicationContext(),
+                        UpdateActivity.class);
+                startActivity(intent);
+            }
+        });
+
         buttonSubmit = (Button)findViewById(R.id.buttonSubmit);
         status = (TextView)findViewById(R.id.status);
         status.setText(" ");
         final CustomerId customerId = (CustomerId)findViewById(R.id.customerId2);
-
-        // Get granted URL if any and if so launch browser directly
+        // Check if an id is already authenticated and if so fetch customer url
+        // and launch browser.
         final SharedPreferences pref = this.getSharedPreferences(
                 "com.mobimation.URL", Context.MODE_PRIVATE);
         // Use browser preference setting if any (internal=default)
         boolean external=pref.getBoolean("external", false);
-        String u=pref.getString("url",null);
-        if (u!=null) {
-            launchWeb(external,getApplicationContext(), u);
+        String id=pref.getString("id", null);
+        if (id!=null) {
+            // We have an approved customer id, retrieve url and launch browser
+            new Authenticator(getApplicationContext()).execute(url, id);
+
+/*
+            if (auto)
+                launchWebAuto(getApplicationContext(),u);
+            else
+                launchWeb(external, getApplicationContext(), u);
+*/
             finish(); // Abort Login activity launch
         }
         else {
+            /**
+             * Request user input of Customer Id, with proper reformatting of
+             * the EditText content during user input.
+             */
             customerId.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    add=false;
+                    adjust=false;
+                    if (after>count) { // moving forward
+                        if ((s.length() == 2) || (s.length() == 6)) {
+                            add = true;
+                        }
+                    }
                     aft=after;
+
                        befo=s.toString();
                     Log.d(LTAG,"Before="+"["+s+"]"+" start="+start+" count="+count+" after="+after);
                 }
@@ -98,17 +141,34 @@ public class LoginActivity2 extends Activity {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                    Log.d(LTAG,"On="+"["+s+"]"+" start="+start+" before="+before+" count="+count);
-                    bef=before;
+                    if (count>0) {
+                        forward = true;
+                        // Semi intelligent space formatting for dummies
+                        if (s.length() == 4) {
+                            if (start == 3) if (before == 0) if (count == 1) {
+                                customerId.setText(customerId.getText().insert(3," "));
+                                customerId.setSelection(customerId.length());
+                            }
+                        }
+                        else
+                        if (s.length() == 8) {
+                            if (start == 7) if (before == 0) if (count == 1) {
+                                customerId.setText(customerId.getText().insert(7," "));
+                                customerId.setSelection(customerId.length());
+                            }
+                        }
+                    }
+                    else
+                        forward=false;
                 }
 
                 @Override
                 public void afterTextChanged(Editable s) {
                     Log.d(LTAG,"After="+"["+s.toString()+"]");
-                    if ((s.length()==3) || (s.length()==7)) {
-                        if (befo.length()<=s.length())
-                            customerId.setText(customerId.getText() + " ");
-                        customerId.setSelection(customerId.length());
-                    }
+                    if (add)
+                        customerId.setText(customerId.getText() + " ");
+                    customerId.setSelection(customerId.length());
+
                     if (s.length()>11)
                         s.delete(s.length() - 1, s.length());
 
@@ -117,12 +177,22 @@ public class LoginActivity2 extends Activity {
                     }
                 }
             });
-            
+
+            /**
+             * When the user clicks the Submit button
+             * the current content of edited customer id is submitted
+             * for authentication. The async task that
+             * carry out this job will take care of launching
+             * the browser with the given url in case the given
+             * id was approved.
+             */
             buttonSubmit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // Run asynchronous thread to authenticate submitted id string
                     String id = customerId.getText().toString();
                     id=id.replace(" ","");  // Clean up
+                    // Run authentication/launch thread
                     new Authenticator(getApplicationContext()).execute(url, id);
                 }
             });
@@ -189,8 +259,10 @@ public class LoginActivity2 extends Activity {
     }
 
     /**
-     * Run asynchronous request for customer page URL.
-     * Returns url if submitted id is valid, else null.
+     * Run asynchronous customer id authentication over https to ln4 server.
+     * In case id is approved a corresponding customer url is returned.
+     * The browser selected for the device used will be launched to
+     * retrieve/present the web content for that url.
      */
     protected class Authenticator extends AsyncTask<String, String, String> {
 
@@ -229,6 +301,16 @@ public class LoginActivity2 extends Activity {
             this.context = context;
         }
 
+        @Override
+        protected  void onPreExecute()
+        {
+            // Erase any stored authentication
+            SharedPreferences pref = context.getSharedPreferences(
+                    "com.mobimation.URL", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.clear();
+            editor.commit();
+        }
         @Override
         protected String doInBackground(String... params) {
             String webUrl=null;
@@ -269,31 +351,43 @@ public class LoginActivity2 extends Activity {
             catch (JSONException je) {
                 je.printStackTrace();
             }
-            return webUrl;
+            return webUrl;  // onPostExecute() receives result..
         }
+
+        /**
+         * publishProgress() updates status string
+         * @param values Tell user how the background job is progressing
+         */
         @Override
         protected void onProgressUpdate(String... values) {
             status.setText(values[0]);
         }
 
+        /**
+         * Called when doInBackground() completes.
+         * Takes care of launching a browser with the given url
+         * @param webUrl The url to view; null if invalid customer id
+         */
         @Override
         protected void onPostExecute(String webUrl) {
             if (webUrl!=null) {  // If web access granted
-                // Store granted URL
+                // Store customer id and page URL
                 SharedPreferences pref = context.getSharedPreferences(
                         "com.mobimation.URL", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = pref.edit();
-                editor.putString("url", webUrl);
+                editor.putString("url", webUrl);  //Save customer url
+                editor.putString("id",code);      // Save customer id
                 editor.commit();
-                // Use browser preference setting if any (internal=default)
-                boolean external=pref.getBoolean("external",false);
-                // Launch WebActivity
-                Log.d(TAG,"Launching web activity");
-                status.setText("Loading browser..");
-                launchWeb(external,context,webUrl);
-                /* Intent intent = new Intent(context, WebActivity.class);
-                intent.putExtra("webUrl", webUrl);
-                startActivity(intent); */
+                if (auto)
+                    launchWebAuto(context,webUrl);
+                else {
+                    // Use browser preference setting if any (internal=default)
+                    boolean external = pref.getBoolean("external", false);
+                    // Launch WebActivity
+                    Log.d(TAG, "Launching web activity");
+                    status.setText("Loading browser..");
+                    launchWeb(external, context, webUrl);
+                }
             }
             else
                 status.setText("Customer id "+code+" not valid");
@@ -301,11 +395,12 @@ public class LoginActivity2 extends Activity {
     }
 
     /**
-     * Launch Web browser activity
+     * Launch Web browser according to settings
      * @param c  Application context
      * @param url  URLfor start page
      */
     private void launchWeb(boolean external,Context c,String url) {
+
         if (external==false) {
             /**
              * Launch internal web browser as a WebView
@@ -318,6 +413,7 @@ public class LoginActivity2 extends Activity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                 intent.putExtra("webUrl", url); // Pass URL to browser activity
                 startActivity(intent);
+                // Finish login activity, back button in browser view will end app
                 finish();
             } else
                 Log.e(LTAG, "Error-launchWeb() called with null URL !");
@@ -329,20 +425,82 @@ public class LoginActivity2 extends Activity {
  //         setImmersive();
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(browserIntent);
+            // finish() on the activity means back button press in
+            // browser view will not take us back to the login screen
+            // but app will end.
+            finish();
         }
     }
 
+    /**
+     * Launch Web browser activity with automatic browser selection
+     * internal/external.  For devices with Android 5 or above
+     * the internal webview is used (which is based on Chrome).
+     * Otherwise an external browser is launched. If user has multiple
+     * browsers installed the one launched depends on a setting external
+     * to this app. Ln4 Solutions promotes use of the Chrome browser
+     * as external browser and checks if it is installed. If not it
+     * tried to assist the user in installing Chrome.
+     * @param c  Application context
+     * @param url  URLfor start page
+     */
+    private void launchWebAuto (Context c, String url) {
+      if (Build.VERSION.SDK_INT >= 21) {  // If >= Android 5
+            /**
+             * Launch internal web browser as a WebView
+             */
+            if (url != null) {
+                Intent intent = new Intent(c, WebActivity.class);
+                // Clear activity stack so that back button on browser
+                // view will cause app exit instead of return to login.
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.putExtra("webUrl", url); // Pass URL to browser activity
+                startActivity(intent);
+                // Finish login activity, back button in browser view will end app
+                finish();
+            } else
+                Log.e(LTAG, "Error-launchWeb() called with null URL !");
+      }
+      else {
+          /**
+           *  We need Chrome technology - Launch external web browser
+           */
+          if (!chromeInstalled()) {
+              if (chromeAssist()) // If user accepts installing Chrome
+                // Redirect user to Chrome installation URL
+                url = "https://play.google.com/store/apps/details?id=com.android.chrome";
+          }
+          Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+          startActivity(browserIntent);
+          // finish() on the activity means back button press in
+          // browser view will not take us back to the login screen
+          // but this app will end.
+          finish();  // Finish this activity
+      }
+    }
 
+    public boolean chromeAssist() {
+        /**
+         * Prompt user to check if installing Chrome of interest
+         */
+        // TODO Implement prompting user about Chrome installation
+        return false;
+    }
+/*
     public void setImmersive() {
-
+        // Experimental: Test of setting parameters that
+        // tells external browser to operate in "Immersive mode".
+        // TODO: Currently disabled, has proven not to work reliably.
         // BEGIN_INCLUDE (get_current_ui_flags)
         // The UI options currently enabled are represented by a bitfield.
         // getSystemUiVisibility() gives us that bitfield.
+
         int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
         int newUiOptions = uiOptions;
         // END_INCLUDE (get_current_ui_flags)
         // BEGIN_INCLUDE (toggle_ui_flags)
-        /*
+
         boolean isImmersiveModeEnabled =
                 ((uiOptions | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) == uiOptions);
         if (isImmersiveModeEnabled) {
@@ -350,7 +508,7 @@ public class LoginActivity2 extends Activity {
         } else {
             Log.i(LTAG, "Turning immersive mode mode on.");
         }
-*/
+
         // Navigation bar hiding:  Backwards compatible to ICS.
         if (Build.VERSION.SDK_INT >= 14) {
             newUiOptions ^= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
@@ -376,5 +534,16 @@ public class LoginActivity2 extends Activity {
         if (Build.VERSION.SDK_INT >= 11)
          getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
         //END_INCLUDE (set_ui_flags)
+    }
+*/
+
+    private boolean chromeInstalled() {
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> applications = pm.getInstalledApplications(0);
+        for (ApplicationInfo appInfo : applications) {
+            if (appInfo.processName.contains("com.android.chrome"))
+                return true;
+        }
+        return false;
     }
 }
