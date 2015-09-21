@@ -11,8 +11,8 @@ android {
         applicationId "com.mobimation.ln4solutions"
         minSdkVersion 10
         targetSdkVersion 22
-        versionCode 12
-        versionName "1.00"
+        versionCode 13
+        versionName "1.01"
     }
     buildTypes {
         release {
