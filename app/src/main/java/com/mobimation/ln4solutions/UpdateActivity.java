@@ -113,6 +113,16 @@ public class UpdateActivity extends AppCompatActivity {
        */
 
         try {
+            URL lister = new URL("http://laidback.tv/test/ln4/listfiles.php");
+            URLConnection listConn = lister.openConnection();
+            int listLength = listConn.getContentLength();
+            DataInputStream listStream = new DataInputStream(lister.openStream());
+            byte[] listBuffer = new byte[listLength];
+            listStream.readFully(listBuffer);
+            listStream.close();
+            // We now have a list of the folder content
+            // TODO Use it
+
             URL u = new URL(url);
             URLConnection conn = u.openConnection();
             int contentLength = conn.getContentLength();
@@ -158,6 +168,7 @@ public class UpdateActivity extends AppCompatActivity {
         private final String TAG = Fetcher.class.getSimpleName();
         private Context context;
         private String code;
+        private TextView status;
 
         protected Fetcher(Context context) {
             this.context = context.getApplicationContext();
@@ -172,11 +183,75 @@ public class UpdateActivity extends AppCompatActivity {
             downloadFile(params[0], outputFile);
             return "ok";
         }
+        @Override
+        protected void onProgressUpdate(String... values)  {
+            super.onProgressUpdate(values);
+            status.setText(values[0]);
+        }
 
         @Override
         protected void onPostExecute(String result) {
           Log.d(TAG, "onPostExcute");
             installApp(context);
         }
+
+        /**
+         * Download file from server to local storage
+         * @param url
+         * @param outputFile
+         */
+        private void downloadFile(String url, File outputFile) {
+     /* // Alternative download code TODO: Eventually test this
+        try {
+            URL u = new URL(url);
+            InputStream is = u.openStream();
+
+            DataInputStream dis = new DataInputStream(is);
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            FileOutputStream fos = new FileOutputStream( outputFile);
+            while ((length = dis.read(buffer))>0) {
+                fos.write(buffer, 0, length);
+            }
+
+        } catch (MalformedURLException mue) {
+            Log.e("SYNC getUpdate", "malformed url error", mue);
+        } catch (IOException ioe) {
+            Log.e("SYNC getUpdate", "io error", ioe);
+        } catch (SecurityException se) {
+            Log.e("SYNC getUpdate", "security error", se);
+        }
+
+       */
+
+            try {
+                URL u = new URL(url);
+                URLConnection conn = u.openConnection();
+                int contentLength = conn.getContentLength();
+                publishProgress("Downloading "+contentLength+" bytes...");
+                DataInputStream stream = new DataInputStream(u.openStream());
+
+                byte[] buffer = new byte[contentLength];
+                stream.readFully(buffer);
+                stream.close();
+
+                DataOutputStream fos = new DataOutputStream(new FileOutputStream(outputFile));
+                fos.write(buffer);
+                fos.flush();
+                fos.close();
+                publishProgress("APK download finished.");
+            } catch (FileNotFoundException e) {
+                Log.e("FileNotFoundException", e + "");
+                publishProgress(e.getLocalizedMessage());
+                return;
+            } catch (IOException e) {
+                Log.e("IOException",e+"");
+                publishProgress(e.getLocalizedMessage());
+                return;
+            }
+        }
+
     }
 }

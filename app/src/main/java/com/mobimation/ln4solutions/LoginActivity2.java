@@ -83,6 +83,8 @@ public class LoginActivity2 extends Activity {
         setContentView(R.layout.activity_login2);
         // Temporary: When user clicks LN4 logo a new app version
         // is installed if any upon user approval.
+
+        /*  TODO Experimental update function disabled for now
         buttonUpgrade = (ImageView) findViewById(R.id.logo);
         buttonUpgrade.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,6 +95,7 @@ public class LoginActivity2 extends Activity {
                 startActivity(intent);
             }
         });
+        */
 
         buttonSubmit = (Button)findViewById(R.id.buttonSubmit);
         status = (TextView)findViewById(R.id.status);
