@@ -165,6 +165,7 @@ public class LoginActivity2 extends Activity {
                         forward=false;
                 }
 
+
                 @Override
                 public void afterTextChanged(Editable s) {
                     Log.d(LTAG,"After="+"["+s.toString()+"]");
@@ -200,6 +201,16 @@ public class LoginActivity2 extends Activity {
                 }
             });
         }
+    }
+
+    // Detect pressing of Menu key and open custom settings popup
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        Log.d(LTAG,"Key="+keyCode);
+        if (keyCode==82) {
+            Log.d(LTAG,"Menu pressed");
+        }
+        return true;
     }
 
     @Override
