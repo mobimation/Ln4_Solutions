@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +18,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ZoomButtonsController;
 
+/**
+ * The WebActivity runs the internal Android browser component
+ * to view the content referenced by the passed URL.
+ * The Android back button feature is configured to have the browser
+ * return to its previous page rather than quitting the activity.
+ */
 public class WebActivity extends Activity {
     private final String TAG = WebActivity.class.getSimpleName();
     String webUrl;
@@ -90,6 +97,30 @@ public class WebActivity extends Activity {
         browser.setWebViewClient(new WebViewClient());
         if (savedInstanceState == null)
             browser.loadUrl(webUrl);
+    }
+
+    /**
+     * New in 1.04: Intercept back button and have it work as a web browser back
+     * button as long as there is something to revert to.
+     * @param keyCode
+     * @param event
+     * @return
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_BACK:
+                    if (browser.canGoBack()) {
+                        browser.goBack();
+                    } else {
+                        finish();
+                    }
+                    return true;
+            }
+
+        }
+        return super.onKeyDown(keyCode, event);
     }
     @Override
     protected void onSaveInstanceState(Bundle outState )
